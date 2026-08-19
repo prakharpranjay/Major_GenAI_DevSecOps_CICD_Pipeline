@@ -19,52 +19,61 @@ pipeline {
 
         stage('Verify Environment') {
             steps {
-                sh '''
-                    echo "Checking environment..."
+                powershell '''
+                    Write-Host "=== Jenkins User ==="
+                    whoami
 
-                    python3 --version
-                    docker --version
-                    ollama --version
+                    Write-Host "=== Python ==="
+                    & "C:\\Users\\Prakhar Pranjay\\AppData\\Local\\Programs\\Python\\Python312\\python.exe" --version
 
-                    echo "Available Ollama models:"
-                    ollama list
+                    Write-Host "=== Docker ==="
+                    & "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe" --version
+
+                    Write-Host "=== Ollama ==="
+                    & "C:\\Users\\Prakhar Pranjay\\AppData\\Local\\Programs\\Ollama\\ollama.exe" --version
+
+                    Write-Host "=== Ollama Models ==="
+                    & "C:\\Users\\Prakhar Pranjay\\AppData\\Local\\Programs\\Ollama\\ollama.exe" list
                 '''
             }
         }
 
         stage('Setup Python Environment') {
             steps {
-                sh '''
-                    python3 -m venv venv
+                powershell '''
+                    $python = "C:\\Users\\Prakhar Pranjay\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
 
-                    venv/bin/python -m pip install --upgrade pip
+                    if (!(Test-Path "venv")) {
+                        & $python -m venv venv
+                    }
 
-                    venv/bin/pip install -r requirements.txt
+                    .\\venv\\Scripts\\python.exe -m pip install --upgrade pip
+                    .\\venv\\Scripts\\python.exe -m pip install -r requirements.txt
                 '''
             }
         }
 
         stage('Generate Dockerfile with GenAI') {
             steps {
-                sh '''
-                    echo "Generating Dockerfile for: ${LANGUAGE}"
+                powershell '''
+                    Write-Host "Generating Dockerfile for: $env:LANGUAGE"
 
-                    venv/bin/python generate_dockerfile.py "${LANGUAGE}"
+                    .\\venv\\Scripts\\python.exe generate_dockerfile.py "$env:LANGUAGE"
                 '''
             }
         }
 
         stage('Verify Generated Dockerfile') {
             steps {
-                sh '''
-                    if [ ! -f Dockerfile ]; then
-                        echo "ERROR: Dockerfile was not generated."
+                powershell '''
+                    if (!(Test-Path "Dockerfile")) {
+                        Write-Error "Dockerfile was not generated."
                         exit 1
-                    fi
+                    }
 
-                    echo "===== Generated Dockerfile ====="
-                    cat Dockerfile
-                    echo "================================"
+                    Write-Host "===== Generated Dockerfile ====="
+                    Get-Content Dockerfile
+                    Write-Host "================================"
                 '''
             }
         }
