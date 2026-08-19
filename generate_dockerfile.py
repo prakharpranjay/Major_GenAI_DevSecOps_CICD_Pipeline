@@ -1,7 +1,8 @@
+import sys
 import ollama
 
 PROMPT = """
-ONLY Generate an ideal Dockerfile for {language} with best practices. Do not provide any description
+ONLY Generate an ideal Dockerfile for {language} with best practices. Do not provide any description.
 Include:
 - Base image
 - Installing dependencies
@@ -11,11 +12,28 @@ Include:
 """
 
 def generate_dockerfile(language):
-    response = ollama.chat(model='llama3.2:1b', messages=[{'role': 'user', 'content': PROMPT.format(language=language)}])
+    response = ollama.chat(
+        model='llama3.2:1b',
+        messages=[
+            {
+                'role': 'user',
+                'content': PROMPT.format(language=language)
+            }
+        ]
+    )
     return response['message']['content']
 
 if __name__ == '__main__':
-    language = input("Enter the programming language: ")
+    if len(sys.argv) > 1:
+        language = sys.argv[1]
+    else:
+        language = input("Enter the programming language: ")
+
     dockerfile = generate_dockerfile(language)
+
+    with open("Dockerfile", "w") as f:
+        f.write(dockerfile)
+
     print("\nGenerated Dockerfile:\n")
     print(dockerfile)
+    print("\nDockerfile saved successfully.")
